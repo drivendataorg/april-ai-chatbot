@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Meet April</title>
+<!-- COPY HEADER -->
+<style>
+  /* https://codepen.io/npgenx/details/wEVvZJ */
+  @keyframes blink {50% { color: transparent }}
+  .loader__dot { animation: 1s blink infinite }
+  .loader__dot:nth-child(2) { animation-delay: 250ms }
+  .loader__dot:nth-child(3) { animation-delay: 500ms }
+  .chat-container {
+    background-color: #C5D8F3;
+    padding: 0.7em;
+    min-height: 100%;
+  }
+  .chat-flex {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+  .avatar-column{
+    background-image:url("https://drivendata-public-assets.s3.amazonaws.com/drivendata-sunburst.png");
+    background-size:contain;
+    background-repeat: no-repeat;
+    display:block;
+    float: left;
+    margin-right: 0.5em;
+    width: 36px;
+    min-width: 36px;
+    height: 100%;
+    min-height: 36px;
+  }
+  .chat-column {
+    padding-left: 0.7em;
+  }
+  .break {
+    flex-basis: 100%;
+    height: 1.4em;
+  }
+  #input {
+    margin-top: 0.7em;
+  }
+  #feedback {
+    line-height: 1.4em;
+  }
+  button:disabled {
+    color: #bbb;
+  }
+  button.hidden-vis {
+    visibility: hidden;
+  }
+</style>
+<!-- / COPY HEADER -->
+</head>
+<body>
+<!-- COPY MEET APRIL -->
+<center><h2>Meet April.</h2></center>
+<div class="chat-container" style="width: 62%; margin: 1.4em auto; min-height: 5.6em;">
+<div class="chat-flex">
+<div class="avatar-column"></div>
+<div class="chat-column">
+<b>April: <br/></b>
+<span id="greeting" style="line-height: 1.4em;">
+<span class="loader"><span class="loader__dot">.</span><span class="loader__dot">.</span><span class="loader__dot">.</span></span>
+</span>
+</div>
+</div>
+</div>
+<!-- / COPY MEET APRIL -->
+<hr/>
+<!-- COPY SUBMIT PREDICTIONS -->
+<textarea id="input" name="input" rows="4" cols="70">[0.5, 0.5, 0.5, 0.5, 0.5]</textarea>
+<br/><br/>
+<button type="submit" id="submit" disabled>Loading <span class="loader"><span class="loader__dot">.</span><span class="loader__dot">.</span><span class="loader__dot">.</span></span></button>
+<br/><br/>
+<div class="chat-container">
+<div class="chat-flex">
+<div class="avatar-column"></div>
+<div class="chat-column" style="min-height: 4.2em;">
+<b>April: <br/></b>
+<div id="feedback">
+<span class="loader"><span class="loader__dot">.</span><span class="loader__dot">.</span><span class="loader__dot">.</span></span>
+</div>
+<div><span style="color: gray;" id="duplicate-note"></span></div>
+</div>
+</div>
+<div class="break"></div>
+<div id="change-button"><button type="submit" id="change" class="hidden-vis" disabled>I don't like the feedback that I'm getting.</button></div>
+</div>
+<!-- / COPY SUBMIT PREDICTIONS -->
+<script src="https://code.jquery.com/jquery-3.6.4.slim.min.js" integrity="sha256-a2yjHM4jnF9f54xUQakjZGaqYs/V1CYvWpoqZzC2/Bw=" crossorigin="anonymous"></script>
+<!-- COPY FOOTER -->
+<script>
+  $("#input").keyup( function() {
+    // Disable submit button if input textarea is empty
+    $("#submit").attr("disabled", $(this).val() === "");
+  });
+
+  const ellipses = '<span class="loader"><span class="loader__dot">.</span><span class="loader__dot">.</span><span class="loader__dot">.</span></span>'
+  const greetings = [
+    "Hello there, I'm excited about the opportunity to collaborate with you!",
+    "Greetings, I'm eagerly anticipating the chance to work with you.",
+    "Hi, I'm thrilled at the prospect of working alongside you.",
+    "Good day, I can't wait to get started working with you.",
+    "Hey there, I'm looking forward to working together and achieving great things!",
+    "Nice to meet you, I'm excited to embark on this project with you.",
+    "Salutations, I'm eager to see what we can accomplish working together.",
+    "Welcome, I'm anticipating a productive and fulfilling collaboration with you.",
+    "Hi, I'm looking forward to getting to know you better and working together.",
+    "Hello, I'm excited to team up with you and make a positive impact.",
+    "Greetings! I'm eager to collaborate with you and work towards our shared goals.",
+    "Hello there! I can't wait to start working together and achieving great things.",
+    "Hi! It's a pleasure to meet you and I'm excited about the opportunity to work with you.",
+    "Welcome! I'm looking forward to working alongside you and making meaningful progress.",
+    "Good day! I'm thrilled to be joining forces with you and contributing to our joint success.",
+    "Hey! I'm enthusiastic about the chance to work with you and accomplish great things together.",
+    "Hello, it's great to connect with you! I'm excited to collaborate and achieve our shared objectives.",
+    "Hi there! I'm looking forward to partnering with you and making a positive impact together.",
+    "Greetings! I'm eager to start working with you and bring our collective skills and expertise to the table.",
+    "Hello, I'm excited about the opportunity to work with you and achieve our common goals."
+  ]
+  const awaitings = [
+    "I am eagerly anticipating your predictions.",
+    "I can't wait to see what you predict.",
+    "I am eagerly awaiting your predictions.",
+    "I am excited to learn about your predictions.",
+    "I am looking forward to hearing your predictions.",
+    "I am anxious to hear your predictions.",
+    "I am eagerly anticipating what you predict.",
+    "I am excited to see what your predictions are.",
+    "I am looking forward to your predictions with great anticipation.",
+    "I am keen to hear your predictions.",
+    "I am eagerly awaiting the unveiling of your predictions.",
+    "I am excited to find out what you predict.",
+    "I am anticipating your predictions with great interest.",
+    "I can't wait to see what predictions you have in store.",
+    "I'm excited to find out what your predictions are.",
+    "I'm looking forward to hearing your insights.",
+    "I'm excited to learn about your predictions.",
+    "I'm eager to know your predictions.",
+    "I'm intrigued to see what your predictions will be.",
+    "I'm really looking forward to seeing what you predict.",
+  ]
+  const allResponses = {
+    "technical_jargon": [
+        "Based on current data, the likelihood of a positive outcome is low.",
+        "The probability of a favorable result appears to be statistically insignificant.",
+        "The uncertainty principle suggests that an affirmative response cannot be guaranteed.",
+        "The available evidence points towards a negative outcome.",
+        "The results of our simulations indicate that the probability of success is minimal.",
+        "The outcome is highly dependent on numerous unpredictable variables.",
+        "The lack of consistent data makes it difficult to provide a reliable response.",
+        "The complexity of the situation suggests that a definitive answer cannot be provided.",
+        "The current state of affairs makes it difficult to anticipate a favorable outcome.",
+        "The inherent randomness of the universe makes a positive outcome uncertain.",
+        "The available information suggests that the probability of success is remote.",
+        "The lack of historical precedent for this situation makes it difficult to predict a positive outcome.",
+        "The multitude of potential outcomes makes it difficult to determine a definitive response.",
+        "The current circumstances make it unlikely that a positive outcome can be achieved.",
+        "The high level of uncertainty in the situation makes it difficult to provide a clear answer.",
+        "The available evidence suggests that the likelihood of success is minimal.",
+        "The numerous variables at play make it difficult to provide a definitive response.",
+        "The chaotic nature of the situation makes it impossible to guarantee a positive outcome.",
+        "The lack of clear causation makes it difficult to predict a favorable result.",
+        "The available data suggests that a negative outcome is highly probable."
+    ],
+    "encouraging_coach": [
+        "It's not looking too great, but that doesn't mean you can't turn things around.",
+        "You might face some obstacles, but you're strong enough to overcome them.",
+        "The future isn't clear right now, but you have the power to create your own path.",
+        "It's uncertain, but don't let that stop you from taking action.",
+        "Things might not go as planned, but that doesn't mean you can't learn and grow from the experience.",
+        "The outcome is still unknown, but your resilience will carry you through.",
+        "There's some doubt, but keep pushing forward and you'll find a way.",
+        "The answer is unclear, but you can always seek guidance and support from others.",
+        "It's not a definite no, but it's not a sure thing either. Stay optimistic and keep trying.",
+        "The future is unpredictable, but your determination can overcome any challenge.",
+        "It's not a guaranteed win, but your effort and hard work will make a difference.",
+        "The situation is uncertain, but you have the ability to adapt and make the most of it.",
+        "The answer isn't clear yet, but you can trust in your own abilities and instincts.",
+        "It's not a solid yes, but don't give up hope just yet.",
+        "The outlook is uncertain, but you can approach it with a positive attitude and make the best of it.",
+        "It's not a perfect scenario, but you can make the most of what you have and work towards a better outcome.",
+        "The future is unknown, but don't let that stop you from pursuing your dreams.",
+        "It's not a definite success, but don't be afraid to take risks and try new things.",
+        "The answer isn't clear, but you have the power to shape your own future.",
+        "It's not an easy road ahead, but with determination and perseverance, you can overcome any challenge.",
+    ],
+    "new_age_mystic": [
+        "The universe is unclear at this time, please ask again later.",
+        "Your energy is not aligned with the answer you seek.",
+        "The mystic forces are in flux, the answer is uncertain.",
+        "The aura surrounding your question is not harmonious with a clear answer.",
+        "The cosmos cannot provide a clear answer at this moment.",
+        "The vibrations surrounding your inquiry are murky, the answer is unclear.",
+        "The cosmic winds are blowing in many directions, making the answer uncertain.",
+        "The universe is shrouded in mystery, the answer is unknown.",
+        "The energy surrounding your question is unsettled, the answer may be unreliable.",
+        "The forces of destiny are undecided, the answer is not clear.",
+        "The divinatory forces are inconclusive, the answer is uncertain.",
+        "The cosmic energies are in a state of flux, the answer may not be reliable.",
+        "The mystic forces are not able to provide a clear answer at this time.",
+        "The cosmic tides are changing, the answer is uncertain.",
+        "The answer you seek is not yet written in the stars.",
+        "The cosmic vibrations are not in harmony, the answer may be unclear.",
+        "The universal energies are complex, the answer is not simple.",
+        "The cosmos is not in a state to provide a clear answer.",
+        "The answer is unknown, but trust in the universe's guidance.",
+        "The mystic forces are not able to provide a clear answer, but all will be revealed in due time."
+    ],
+    "legal_document": [
+        "The outlook is doubtful and subject to change without notice.",
+        "The response cannot be guaranteed and is subject to various interpretations.",
+        "There is no guarantee of a positive outcome, as the circumstances may vary.",
+        "The answer is uncertain and dependent on numerous factors beyond our control.",
+        "We cannot assure a favorable outcome, as the situation is fluid and unpredictable.",
+        "The response is speculative and subject to various contingencies.",
+        "There is no guarantee of a favorable outcome, as events may unfold in unforeseen ways.",
+        "The answer cannot be confirmed, as it is subject to factors beyond our knowledge or control.",
+        "We cannot guarantee a positive outcome, as the situation is highly uncertain.",
+        "The response is subject to change based on new information or developments.",
+        "There is no certainty of a positive outcome, as the situation is highly volatile.",
+        "The answer cannot be verified, as the situation is complex and multifaceted.",
+        "We cannot guarantee a positive outcome, as the situation is subject to various interpretations.",
+        "The response is subject to numerous uncertainties and contingencies.",
+        "There is no assurance of a favorable outcome, as the situation is highly unpredictable.",
+        "The answer is subject to various risks and uncertainties, and cannot be guaranteed.",
+        "We cannot confirm a positive outcome, as the situation is highly fluid and changeable.",
+        "The response is subject to various unknowns and uncertainties.",
+        "There is no guarantee of a favorable outcome, as events may unfold in unexpected ways.",
+        "The answer cannot be confirmed, as the situation is highly complex and dynamic."
+    ],
+    "paul_hollywood": [
+      "I'm not convinced this is going to work out.",
+      "It's looking a bit underproved, if you ask me.",
+      "I'm afraid it's a bit of a soggy bottom.",
+      "I'm not sure you've quite got the balance right.",
+      "It's lacking in flavor and texture, I'm afraid.",
+      "It's not quite hitting the spot.",
+      "I'm not seeing the wow factor.",
+      "It's a bit too dense for my liking.",
+      "I'm not sure it's worth the calories, to be honest.",
+      "It's lacking in finesse.",
+      "It's a bit of a disappointment, really.",
+      "It's not quite up to scratch.",
+      "It's a bit rough around the edges.",
+      "I'm not sure it's worth the effort.",
+      "It's not quite hitting the mark, is it?",
+      "It's a bit too stodgy for me.",
+      "I'm not convinced this is your best effort.",
+      "It's not quite ready to be served, I'm afraid.",
+      "It's lacking in depth of flavor.",
+      "It's not quite meeting my expectations."
+    ],
+    "haiku": [
+      "Future unclear, ask again\nCrystal ball is murky\nAnswers hard to find",
+      "Don't count on it now\nOutlook bleak, sorry to say\nFate won't bend your way",
+      "Signs point to trouble\nAll arrows pointing downward\nExpect rough terrain",
+      "Cannot predict now\nThe future remains hazy\nOutcome unsure still",
+      "Better not to know\nSome secrets best left unknown\nIgnorance is bliss",
+      "The odds are not good\nChances of success are slim\nPrepare for the worst",
+      "Future's out of sight\nYour path may take a detour\nStay alert, be wise",
+      "Signs are ominous\nTake caution, proceed with care\nDisaster looms near",
+      "Outlook not so good\nMisfortune may lie ahead\nBest to prepare now",
+      "Hazy crystal ball\nForesee no clear outcome yet\nTry again later",
+      "Reply hazy, try again\nFuture's not yet certain\nFate remains unknown",
+      "Negative answer\nExpect disappointment now\nHopes and dreams may fall",
+      "Fate may not be kind\nLuck may not be on your side\nPrepare for defeat",
+      "Results doubtful, friend\nBest to hope for the best now\nBut ready for worst",
+      "Signs point to failure\nObstacles may block your path\nVictory uncertain",
+      "Don't bank on success\nFuture is not yet certain\nChallenges ahead",
+      "Future is unclear\nOutlook uncertain at best\nHopes and dreams in doubt",
+      "A grim future looms\nChallenges may be too great\nPrepare for defeat",
+      "The signs are not good\nSuccess may be out of reach\nFortune's favor fades",
+      "Response unclear now\nThe future remains hidden\nTry again later"
+    ],
+    "gandalf": [
+      "The answer you seek is as elusive as the shadow of the Dark Lord.",
+      "The future is clouded, and I cannot see what lies ahead.",
+      "The tides of fate are constantly shifting. What was once certain may now be uncertain.",
+      "Even the wisest cannot see all ends.",
+      "The future is a mystery, shrouded in darkness.",
+      "The answer you seek is beyond my power to divine.",
+      "The winds of change are blowing, and the outcome is uncertain.",
+      "The path ahead is fraught with danger, and the outcome is unclear.",
+      "The answer to your question may lie in the hands of fate.",
+      "The future is uncertain, and even the mightiest cannot control it.",
+      "The answer you seek is hidden, like a secret kept in the heart of the mountain.",
+      "The stars are not aligned in your favor.",
+      "The future is a riddle, wrapped in a mystery, inside an enigma.",
+      "The answer you seek is as elusive as the wisps of smoke from a wizard's pipe.",
+      "The future is a canvas, and the brushstrokes of fate are unpredictable.",
+      "The road ahead is treacherous, and the destination is uncertain.",
+      "The answer you seek is buried deep within the earth, like a precious gem waiting to be unearthed.",
+      "The future is like a river, ever-changing and unpredictable.",
+      "The answer you seek is like a bird on the wing, impossible to catch.",
+      "The future is like a stormy sea, and the answer you seek may be lost in the waves."
+    ],
+    "ted_lasso": [
+      "Well, I reckon that's about as likely as finding a unicorn in a haystack.",
+      "That's about as doubtful as a snowball's chance in Texas.",
+      "Sorry friend, but I'd say your chances are about as slim as a mosquito's waistline.",
+      "That's a tough one, but I wouldn't go betting the farm on it.",
+      "I'm not seeing it, partner. Your chances are about as good as a one-legged man in a butt-kicking contest.",
+      "That's a real head-scratcher, but I wouldn't hold my breath.",
+      "Hmmm...I'd say the odds are about as good as a turtle outrunning a cheetah.",
+      "I'm not one to rain on parades, but I'd say your prospects are about as bright as a black hole.",
+      "I'm afraid that's about as likely as a vegan wolf enjoying a salad.",
+      "That's a tough break, friend. I'd say your chances are about as good as a snowflake surviving in a furnace.",
+      "I'm not feeling it, partner. Your likelihood is about as good as a bald eagle with a comb-over.",
+      "Well, I'll be hornswoggled. I'd say your chances are about as good as a chocolate teapot.",
+      "That's a real doozy. I'd say your prospects are about as promising as a wet match.",
+      "I'm afraid it's not looking good, friend. Your odds are about as favorable as a cat enjoying a bath.",
+      "I hate to be the bearer of bad news, but I'd say your chances are about as good as a snowball in a sauna.",
+      "Well, butter my biscuits. I'd say your prospects are about as good as a screen door on a submarine.",
+      "I'm not feeling it, partner. Your likelihood is about as good as a fish on a bicycle.",
+      "Sorry, pal. I'd say your chances are about as good as a firefly in a hurricane.",
+      "I'm afraid it's not in the cards, friend. Your odds are about as favorable as a turtle trying to fly.",
+      "Well, shucks. I'd say your prospects are about as good as a donut in a diet."
+    ]
+  }
+  const duplicates = [
+    "You've already mentioned that prediction. Can you think of something new?",
+    "We've heard that prediction from you before. How about another one?",
+    "Your previous prediction has already been noted. Can you share another one?",
+    "You've made that prediction before. Do you have any others to offer?",
+    "That prediction has already been stated. Can you offer a different one?",
+    "You've already made that prediction. Can you come up with something fresh?",
+    "We've already heard that prediction from you. Can you provide a new one?",
+    "You've already made that prediction. Can you try something else?",
+    "That prediction has already been discussed. Can you come up with a new one?",
+    "You've already mentioned that prediction. How about sharing a different one?",
+    "Your previous prediction has already been acknowledged. Can you offer another one?",
+    "We've already heard that prediction. Can you provide a novel one?",
+    "You've already made that prediction. Can you think of something alternative?",
+    "That prediction has already been presented. Can you provide a fresh one?",
+    "Your earlier prediction has already been noted. Can you share a different one?",
+    "You've already made that prediction. Can you come up with a new angle?",
+    "We've already heard that prediction. Can you provide a unique one?",
+    "Your previous prediction has already been mentioned. Can you offer another perspective?",
+    "You've already made that prediction. Can you try a different approach?",
+    "That prediction has already been covered. Can you provide a new insight?"
+  ]
+  const apologies = [
+    "Sorry. I will try to do better.",
+    "Apologies. I will make a greater effort to improve.",
+    "I'm sorry. I will strive to do better moving forward.",
+    "My apologies. I will work harder to improve and meet expectations.",
+    "I'm sorry for falling short. I will aim to do better next time.",
+    "I apologize for any mistakes made. I will do my best to improve in the future.",
+    "I'm sorry if I let you down. I will make sure to improve and do better next time.",
+    "Please forgive me for any shortcomings. I will put in more effort to improve.",
+    "I'm sorry for any inconvenience caused. I will try to do better in the future.",
+    "Apologies for any errors made. I will take steps to improve and avoid them in the future.",
+    "I'm sorry for not meeting expectations. I will do better next time.",
+    "My apologies for any mistakes made. I will work diligently to improve.",
+    "I'm sorry if I didn't deliver as expected. I will strive to do better in the future.",
+    "Please accept my apologies. I will make an extra effort to improve and exceed expectations.",
+    "I'm sorry for any subpar performance. I will do better moving forward.",
+    "I apologize for any shortcomings. I will take the necessary steps to improve and excel.",
+    "I'm sorry for any lack of quality. I will work harder to do better next time.",
+    "My apologies for any disappointment caused. I will do everything in my power to improve.",
+    "I'm sorry for any mistakes made. I will do my utmost to improve and deliver better results.",
+    "I apologize for any missteps. I will learn from my mistakes and do better in the future.",
+  ]
+  const aprilFools = [
+    "This holiday is at the top of my list.",
+    "It's the holiday that I look forward to the most.",
+    "Out of all the holidays, this one takes the cake.",
+    "I have a special place in my heart for this holiday.",
+    "This holiday holds a very dear spot in my heart.",
+    "There's just something about this holiday that makes it my absolute favorite.",
+    "If I had to pick a favorite holiday, this one would definitely be it.",
+    "This holiday has always been my go-to favorite.",
+    "There's no denying that this is my absolute favorite holiday.",
+    "This holiday just speaks to me on a different level - it's my favorite.",
+    "I love all holidays, but this one holds a special place as my favorite.",
+    "I have a soft spot for this holiday - it's my all-time favorite.",
+    "This holiday always brings a smile to my face because it's my favorite.",
+    "I have a deep appreciation for this holiday - it's definitely my favorite.",
+    "There's just something about this holiday that makes it stand out as my favorite.",
+    "This holiday is the one that I cherish the most - it's my favorite.",
+    "If I could only celebrate one holiday every year, it would be this one - it's my favorite.",
+    "This holiday is so special to me that it's become my favorite.",
+    "Out of all the holidays I've celebrated, this one remains my favorite.",
+    "This holiday never fails to make me happy - it's my absolute favorite.",
+  ]
+  function hash(s) {
+    // https://gist.github.com/hyamamoto/fd435505d29ebfa3d9716fd2be8d42f0?permalink_comment_id=2775538#gistcomment-2775538
+    let h;
+    for (let i = 0; i < s.length; i++) {
+      h = Math.imul(31, h) + s.charCodeAt(i) | 0;
+    };
+    return h;
+  }
+  function shuffleArray(array) {
+    // https://stackoverflow.com/a/12646864
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+  function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+  }
+  async function displayChat(text, elem, delay) {
+    var words = text.split(" ");
+    var current = words[0]
+    elem.text(current);
+    await sleep(delay);
+    for (var i=1; i < words.length; i++) {
+      current = current.concat(" ", words[i]);
+      elem.text(current);
+      await sleep(delay);
+    }
+    return;
+  }
+  async function populateGreeting() {
+    await sleep(2000);
+    await displayChat(greetings[randomInt(greetings.length)] + " 😊", $("#greeting"), 100);
+  }
+  function randomInt(max) {
+    return Math.floor(Math.random() * max);
+  }
+  var feedbackPopulated = false;
+  function elementScrolled(elem) {
+    // Element as scrolled into view
+    // https://stackoverflow.com/a/42016457
+    var docViewTop = $(window).scrollTop();
+    var docViewBottom = docViewTop + $(window).height();
+    var elemTop = $(elem).offset().top;
+    return ((elemTop <= docViewBottom) && (elemTop >= docViewTop));
+  }
+  async function populateFeedback() {
+    feedbackPopulated = true;
+    await sleep(2000);
+    await displayChat(awaitings[randomInt(awaitings.length)], $("#feedback"), 100);
+    $("#submit").attr("disabled", false);
+    $("#submit").text("Submit Predictions");
+  }
+  populateGreeting().then();
+  if (elementScrolled('#feedback')) {
+    populateFeedback().then();
+  }
+  $(window).scroll(async function(){
+    // On scroll
+    if(!feedbackPopulated && elementScrolled('#feedback')) {
+      await populateFeedback();
+    }
+  });
+
+  const personas = Object.keys(allResponses);
+  shuffleArray(personas);
+  var personaIdx = 0;
+  var responses = allResponses[personas[personaIdx % personas.length]]
+  var prevInput = null;
+  shuffleArray(duplicates)
+  var duplicatesIdx = 0;
+  shuffleArray(aprilFools)
+  var aprilFoolsIdx = 0;
+  shuffleArray(apologies)
+  var apologyIdx = 0;
+  var submitCount = 0;
+  $("#submit").click(async function() {
+    submitCount += 1;
+    $("#submit").attr("disabled", true);
+    $("#feedback").html(ellipses);
+    $("#duplicate-note").text("")
+    await sleep(2000);
+    let text = $("#input").val();
+    if (text.toLowerCase().includes("april") && text.toLowerCase().includes("fool")) {
+      var response = "April Fools' Day? " + aprilFools[aprilFoolsIdx % aprilFools.length];
+      aprilFoolsIdx += 1;
+    } else {
+      let hashed = hash(text);
+      var response = responses[Math.abs(hashed) % responses.length].replace(/(\n)+/g, ' / ');
+    }
+    await displayChat(response, $("#feedback"), 100);
+    if (text === prevInput) {
+      await displayChat(duplicates[duplicatesIdx % duplicates.length], $("#duplicate-note"), 100);
+      duplicatesIdx += 1;
+    }
+    prevInput = text;
+    $("#submit").attr("disabled", false);
+    if (submitCount >= 3) {
+      $("#change").attr("disabled", false);
+      $("#change").removeClass("hidden-vis");
+    }
+  });
+  $("#change").click(async function() {
+    $("#submit").attr("disabled", true);
+    $("#change").attr("disabled", true);
+    let response = apologies[apologyIdx % apologies.length] + " 😞";
+    apologyIdx += 1;
+    personaIdx += 1;
+    responses = allResponses[personas[personaIdx % personas.length]];
+    prevInput = null;
+    $("#duplicate-note").text("")
+    await displayChat(response, $("#feedback"), 100);
+    $("#submit").attr("disabled", false);
+  });
+</script>
+<!-- / COPY FOOTER -->
+</body>
+</html>
